@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiSell - Premium Digital Products</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <!-- CryptoJS for Password Hashing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* Custom Styles & Animations */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e7eb;
+        }
+
+        /* Hero section canvas background */
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        /* Custom gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #ffffff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        /* Scroll-triggered fade-in animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.6, 0.2, 0.4, 1), transform 0.8s cubic-bezier(0.6, 0.2, 0.4, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Product card hover effect */
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        .product-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 0 25px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Button hover effect */
+        .btn-primary {
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        /* Custom scrollbar for a more polished look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+
+        /* Cart sidebar transition */
+        #cart-sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-200">
+
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm transition-all duration-300">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold tracking-wider text-white">
+                Digi<span class="text-indigo-500">Sell</span>
+            </a>
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#home" class="text-gray-300 hover:text-indigo-400 transition">Home</a>
+                <a href="#ebooks" class="text-gray-300 hover:text-indigo-400 transition">E-Books</a>
+                <a href="#courses" class="text-gray-300 hover:text-indigo-400 transition">Courses</a>
+                <a href="#about" class="text-gray-300 hover:text-indigo-400 transition">About</a>
+                <a href="#contact" class="text-gray-300 hover:text-indigo-400 transition">Contact</a>
+                <button id="cart-button" class="relative text-gray-300 hover:text-indigo-400 transition">
+                    <i data-feather="shopping-cart"></i>
+                    <span id="cart-badge" class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+                <button id="admin-button" class="text-gray-300 hover:text-indigo-400 transition hidden">
+                    <i data-feather="settings"></i>
+                </button>
+                <button id="admin-login-button" class="text-gray-300 hover:text-indigo-400 transition">
+                    <i data-feather="log-in"></i>
+                </button>
+                <button id="admin-logout-button" class="text-gray-300 hover:text-indigo-400 transition hidden">
+                    <i data-feather="log-out"></i>
+                </button>
+            </nav>
+            <div class="md:hidden flex items-center gap-4">
+                <button id="cart-button-mobile" class="relative text-white focus:outline-none">
+                    <i data-feather="shopping-cart"></i>
+                    <span id="cart-badge-mobile" class="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+                <button id="mobile-menu-button" class="text-white focus:outline-none">
+                    <i data-feather="menu"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#home" class="block py-2 px-6 text-sm hover:bg-gray-800">Home</a>
+            <a href="#ebooks" class="block py-2 px-6 text-sm hover:bg-gray-800">E-Books</a>
+            <a href="#courses" class="block py-2 px-6 text-sm hover:bg-gray-800">Courses</a>
+            <a href="#about" class="block py-2 px-6 text-sm hover:bg-gray-800">About</a>
+            <a href="#contact" class="block py-2 px-6 text-sm hover:bg-gray-800">Contact Us</a>
+            <a href="#" id="admin-login-button-mobile" class="block py-2 px-6 text-sm hover:bg-gray-800">Admin Login</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- ... existing hero section ... -->
+        <section id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+            <canvas id="hero-canvas"></canvas>
+            <div class="relative z-10 text-center px-4">
+                <h1 class="text-5xl md:text-7xl lg:text-8xl font-black mb-4 gradient-text reveal">
+                    Unlock Your Potential
+                </h1>
+                <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-300 mb-8 reveal" style="transition-delay: 0.2s;">
+                    Explore our curated collection of premium e-books and courses designed to elevate your skills and knowledge.
+                </p>
+                <a href="#ebooks" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-full text-lg transition duration-300 btn-primary shadow-lg shadow-indigo-500/30 reveal" style="transition-delay: 0.4s;">
+                    Browse Products
+                </a>
+            </div>
+        </section>
+
+        <!-- E-books Section -->
+        <section id="ebooks" class="py-20 md:py-32 bg-gray-900/50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl md:text-5xl font-bold text-white reveal">Featured E-Books</h2>
+                    <p class="text-gray-400 mt-4 max-w-2xl mx-auto reveal" style="transition-delay: 0.2s;">
+                        Dive deep into new subjects with our best-selling e-books, crafted by industry experts.
+                    </p>
+                </div>
+                <div id="ebooks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <!-- E-book cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Courses Section -->
+        <section id="courses" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl md:text-5xl font-bold text-white reveal">Interactive Courses</h2>
+                    <p class="text-gray-400 mt-4 max-w-2xl mx-auto reveal" style="transition-delay: 0.2s;">
+                        Go from beginner to pro with our hands-on video courses. Learn at your own pace.
+                    </p>
+                </div>
+                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                     <!-- Course cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ... existing about and contact sections ... -->
+        <section id="about" class="py-20 md:py-32 bg-gray-900/50"><!-- ... --></section>
+        <section id="contact" class="py-20 md:py-32"><!-- ... --></section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900/50 border-t border-gray-800"><!-- ... --></footer>
+
+    <!-- Product Detail Modal -->
+    <div id="product-modal" class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[60] opacity-0 pointer-events-none">
+        <div id="product-modal-content" class="modal-content bg-gray-900 rounded-2xl w-11/12 md:w-3/4 lg:w-1/2 max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 relative border border-gray-700 opacity-0 transform scale-95">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-gray-900 z-[70] shadow-2xl transform translate-x-full border-l border-gray-700">
+        <div class="flex flex-col h-full">
+            <div class="flex justify-between items-center p-6 border-b border-gray-700">
+                <h3 class="text-2xl font-bold text-white">Your Cart</h3>
+                <button id="close-cart-button" class="text-gray-400 hover:text-white">
+                    <i data-feather="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+            <div id="cart-items" class="flex-grow p-6 overflow-y-auto">
+                <!-- Cart items will be injected here -->
+            </div>
+            <div class="p-6 border-t border-gray-700">
+                <div class="flex justify-between items-center mb-4 text-lg">
+                    <span class="text-gray-300">Total:</span>
+                    <span id="cart-total" class="text-2xl font-bold text-white">₹0.00</span>
+                </div>
+                <button id="checkout-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg text-lg transition btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[80] opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-900 rounded-2xl w-11/12 max-w-2xl p-8 relative border border-gray-700 opacity-0 transform scale-95 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start">
+                <h2 class="text-3xl font-bold text-white mb-6">Confirm Your Order</h2>
+                <button id="close-checkout-modal" class="text-gray-400 hover:text-white">
+                    <i data-feather="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Order Summary -->
+                <div class="bg-gray-800/50 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4">Order Summary</h3>
+                    <div id="checkout-order-summary" class="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2">
+                        <!-- Summary items injected here -->
+                    </div>
+                    <div class="border-t border-gray-700 pt-4 space-y-2">
+                        <div class="flex justify-between text-gray-300">
+                            <span>Subtotal</span>
+                            <span id="checkout-subtotal">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-white font-bold text-xl">
+                            <span>Total</span>
+                            <span id="checkout-total">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Details Form -->
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Your Details</h3>
+                    <form id="checkout-form">
+                        <div class="mb-4">
+                            <label for="checkout-email" class="block text-gray-400 mb-2">Email Address</label>
+                            <input type="email" id="checkout-email" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="you@example.com">
+                        </div>
+                        <div class="mb-6">
+                            <label for="checkout-phone" class="block text-gray-400 mb-2">10-Digit Mobile Number</label>
+                            <input type="tel" id="checkout-phone" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="9876543210" pattern="\d{10}">
+                        </div>
+                        <button type="submit" id="pay-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition btn-primary flex items-center justify-center gap-2">
+                            <i data-feather="lock" class="w-5 h-5"></i>
+                            <span id="pay-button-text">Pay Now</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Success Modal -->
+    <div id="success-modal" class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[80] opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-900 rounded-2xl w-11/12 max-w-lg p-8 relative border border-gray-700 opacity-0 transform scale-95 text-center">
+            <div class="mx-auto bg-green-500/10 text-green-400 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                <i data-feather="check" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-2">Payment Successful!</h2>
+            <p class="text-gray-400 mb-6">Your order has been confirmed. Access your products below.</p>
+            <div id="download-links" class="space-y-3 mb-8 text-left">
+                <!-- Download links will be injected here -->
+            </div>
+            <button id="close-success-modal" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg text-lg transition btn-primary">
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[80] opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-900 rounded-2xl w-11/12 max-w-4xl p-8 relative border border-gray-700 opacity-0 transform scale-95 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-white">Admin Panel - Manage Products</h2>
+                <button id="close-admin-modal" class="text-gray-400 hover:text-white">
+                    <i data-feather="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+            <button id="add-product-btn" class="mb-6 w-full md:w-auto self-start bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition btn-primary flex items-center justify-center gap-2">
+                <i data-feather="plus-circle" class="w-5 h-5"></i>
+                Add New Product
+            </button>
+            <div id="admin-product-list" class="flex-grow overflow-y-auto space-y-3 pr-2">
+                <!-- Admin product list will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Form Modal (for Add/Edit) -->
+    <div id="product-form-modal" class="modal-overlay fixed inset-0 bg-black/90 flex items-center justify-center z-[90] opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-900 rounded-2xl w-11/12 max-w-lg p-8 relative border border-gray-700 opacity-0 transform scale-95 max-h-[90vh] overflow-y-auto">
+            <h2 id="product-form-title" class="text-3xl font-bold text-white mb-6">Add New Product</h2>
+            <form id="product-form" class="space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label for="product-name" class="block text-gray-400 mb-2">Product Name</label>
+                    <input type="text" id="product-name" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                 <div>
+                    <label for="product-price" class="block text-gray-400 mb-2">Price (₹)</label>
+                    <input type="number" id="product-price" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required min="0">
+                </div>
+                 <div>
+                    <label for="product-description" class="block text-gray-400 mb-2">Description</label>
+                    <textarea id="product-description" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
+                </div>
+                 <div>
+                    <label for="product-img" class="block text-gray-400 mb-2">Image URL</label>
+                    <input type="url" id="product-img" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="product-downloadUrl" class="block text-gray-400 mb-2">Download URL</label>
+                    <input type="url" id="product-downloadUrl" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="product-type" class="block text-gray-400 mb-2">Product Type</label>
+                    <select id="product-type" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="ebooks">E-Book</option>
+                        <option value="courses">Course</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="cancel-product-form" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[80] opacity-0 pointer-events-none">
+        <div class="modal-content bg-gray-900 rounded-2xl w-11/12 max-w-md p-8 relative border border-gray-700 opacity-0 transform scale-95">
+            <div class="flex justify-between items-start mb-6">
+                <h2 class="text-3xl font-bold text-white">Admin Login</h2>
+                <button id="close-admin-login-modal" class="text-gray-400 hover:text-white">
+                    <i data-feather="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="admin-login-form" class="space-y-4">
+                <div>
+                    <label for="admin-username" class="block text-gray-400 mb-2">Username</label>
+                    <input type="text" id="admin-username" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="admin-password" class="block text-gray-400 mb-2">Password</label>
+                    <input type="password" id="admin-password" class="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition btn-primary">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success/Error Message Popup -->
+    <div id="message-popup" class="fixed bottom-5 right-5 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-[100]">
+        <p id="message-text"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Admin Authentication ---
+            const ADMIN_CREDENTIALS = {
+                username: 'Yogansh_king12',
+                passwordHash: '83c2c04870b0dc433206ce8de27eb740488f51eb05c40b231568523816da2860'
+            };
+
+            let isAdminLoggedIn = false;
+
+            function hashPassword(password) {
+                return CryptoJS.SHA256(password).toString();
+            }
+
+            function checkAdminLogin() {
+                const sessionToken = localStorage.getItem('adminSession');
+                if (sessionToken) {
+                    // Verify session token (in a real app, you'd verify with the server)
+                    isAdminLoggedIn = true;
+                    updateAdminUI();
+                }
+            }
+
+            function updateAdminUI() {
+                const adminButton = document.getElementById('admin-button');
+                const adminLoginButton = document.getElementById('admin-login-button');
+                const adminLogoutButton = document.getElementById('admin-logout-button');
+                const adminLoginButtonMobile = document.getElementById('admin-login-button-mobile');
+
+                if (isAdminLoggedIn) {
+                    adminButton.classList.remove('hidden');
+                    adminLoginButton.classList.add('hidden');
+                    adminLogoutButton.classList.remove('hidden');
+                    adminLoginButtonMobile.textContent = 'Admin Panel';
+                } else {
+                    adminButton.classList.add('hidden');
+                    adminLoginButton.classList.remove('hidden');
+                    adminLogoutButton.classList.add('hidden');
+                    adminLoginButtonMobile.textContent = 'Admin Login';
+                }
+            }
+
+            function adminLogin(username, password) {
+                const hashedPassword = hashPassword(password);
+                if (username === ADMIN_CREDENTIALS.username && hashedPassword === ADMIN_CREDENTIALS.passwordHash) {
+                    isAdminLoggedIn = true;
+                    // Create a session token (in a real app, this would be from the server)
+                    const sessionToken = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                    localStorage.setItem('adminSession', sessionToken);
+                    updateAdminUI();
+                    toggleModal('admin-login-modal', false);
+                    showMessage('Successfully logged in as admin');
+                    return true;
+                }
+                return false;
+            }
+
+            function adminLogout() {
+                isAdminLoggedIn = false;
+                localStorage.removeItem('adminSession');
+                updateAdminUI();
+                showMessage('Successfully logged out');
+            }
+
+            // Initialize admin session
+            checkAdminLogin();
+
+            // Admin Login Form Handler
+            document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('admin-username').value;
+                const password = document.getElementById('admin-password').value;
+                
+                if (!adminLogin(username, password)) {
+                    showMessage('Invalid username or password', true);
+                }
+            });
+
+            // Event Listeners for Admin Authentication
+            document.getElementById('admin-login-button').addEventListener('click', () => {
+                toggleModal('admin-login-modal', true);
+            });
+
+            document.getElementById('admin-login-button-mobile').addEventListener('click', () => {
+                if (!isAdminLoggedIn) {
+                    toggleModal('admin-login-modal', true);
+                } else {
+                    toggleModal('admin-modal', true);
+                }
+                document.getElementById('mobile-menu').classList.add('hidden');
+            });
+
+            document.getElementById('admin-logout-button').addEventListener('click', adminLogout);
+
+            document.getElementById('close-admin-login-modal').addEventListener('click', () => {
+                toggleModal('admin-login-modal', false);
+            });
+
+            // Protect Admin Panel Access
+            document.getElementById('admin-button').addEventListener('click', () => {
+                if (!isAdminLoggedIn) {
+                    showMessage('Please login as admin first', true);
+                    toggleModal('admin-login-modal', true);
+                    return;
+                }
+                toggleModal('admin-modal', true);
+            });
+
+            // --- Product Data Management ---
+            let products;
+
+            const defaultProducts = {
+                ebooks: [
+                    { id: 1, name: 'The Modern JavaScript Guide', price: 1499, img: 'https://placehold.co/600x400/0a0a0a/ffffff?text=Modern+JS', description: 'Master ES6+ features and modern frameworks like React, Vue, and Node.js in this comprehensive guide for all skill levels.', downloadUrl: '#' },
+                    { id: 2, name: 'UI/UX Design Principles', price: 1999, img: 'https://placehold.co/600x400/0a0a0a/ffffff?text=Design+Pro', description: 'Learn the core principles of creating beautiful, intuitive, and user-friendly interfaces. A must-have for designers and developers.', downloadUrl: '#' },
+                    { id: 3, name: 'The Digital Startup', price: 2499, img: 'https://placehold.co/600x400/0a0a0a/ffffff?text=Startup+101', description: 'Your complete roadmap to launching and growing a successful online business, from idea to scaling.', downloadUrl: '#' },
+                ],
+                courses: [
+                    { id: 4, name: 'React Web Development', price: 4999, img: 'https://placehold.co/600x400/111827/ffffff?text=React+Mastery', description: 'Build powerful, fast, user-friendly web applications with React. This course covers everything from components to state management with hooks.', downloadUrl: '#' },
+                    { id: 5, name: 'Python for Data Science', price: 6999, img: 'https://placehold.co/600x400/111827/ffffff?text=Python+Zero', description: 'Analyze data, create beautiful visualizations, and use powerful machine learning libraries like Pandas, NumPy, and Scikit-learn.', downloadUrl: '#' },
+                    { id: 6, name: 'SEO & Digital Marketing', price: 3999, img: 'https://placehold.co/600x400/111827/ffffff?text=SEO+Secrets', description: 'Learn the secrets of Search Engine Optimization to rank higher on Google, attract more customers, and drive organic traffic.', downloadUrl: '#' },
+                ]
+            };
+
+            function loadProducts() {
+                const savedProducts = localStorage.getItem('digiSellProducts');
+                if (savedProducts) {
+                    products = JSON.parse(savedProducts);
+                } else {
+                    products = defaultProducts;
+                    saveProducts();
+                }
+            }
+
+            function saveProducts() {
+                localStorage.setItem('digiSellProducts', JSON.stringify(products));
+            }
+
+            let cart = [];
+
+            // --- Render Functions ---
+            function renderAll() {
+                renderProducts();
+                renderAdminList();
+                feather.replace();
+                 // Re-run reveal observer for dynamically added cards
+                document.querySelectorAll('.reveal:not(.active)').forEach(el => {
+                    const revealObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('active');
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    }, { threshold: 0.1 });
+                    revealObserver.observe(el)
+                });
+            }
+
+            function renderProducts() {
+                const ebooksGrid = document.getElementById('ebooks-grid');
+                const coursesGrid = document.getElementById('courses-grid');
+                ebooksGrid.innerHTML = '';
+                coursesGrid.innerHTML = '';
+
+                products.ebooks.forEach(product => {
+                    ebooksGrid.innerHTML += createProductCard(product);
+                });
+                products.courses.forEach(product => {
+                    coursesGrid.innerHTML += createProductCard(product, 'Enroll Now');
+                });
+            }
+
+            function createProductCard(product, cta = 'Add to Cart') {
+                return `
+                    <div class="product-card bg-gray-900 rounded-2xl overflow-hidden border border-gray-700/50 transition-all duration-300 reveal">
+                        <div class="overflow-hidden cursor-pointer" data-product-id="${product.id}">
+                            <img src="${product.img}" alt="${product.name}" class="w-full h-60 object-cover product-image transition-transform duration-300">
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold text-white mb-2">${product.name}</h3>
+                            <p class="text-gray-400 mb-4 h-12">${product.description.substring(0, 80)}...</p>
+                            <div class="flex justify-between items-center mt-6">
+                                <span class="text-3xl font-bold text-indigo-400">₹${product.price}</span>
+                                <div class="flex gap-2">
+                                    <button class="add-to-cart-btn bg-gray-800 hover:bg-indigo-600 text-white font-semibold p-3 rounded-lg transition-colors duration-300" data-product-id="${product.id}">
+                                        <i data-feather="shopping-cart" class="w-5 h-5"></i>
+                                    </button>
+                                    <button class="buy-now-btn bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-300 text-sm" data-product-id="${product.id}">
+                                        Buy Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- Cart Logic ---
+            function addToCart(productId) {
+                const allProducts = [...products.ebooks, ...products.courses];
+                const product = allProducts.find(p => p.id === productId);
+                const cartItem = cart.find(item => item.id === productId);
+
+                if (cartItem) {
+                    cartItem.quantity++;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                updateCart();
+                showMessage(`${product.name} added to cart!`);
+            }
+
+            function updateCart() {
+                const cartItemsContainer = document.getElementById('cart-items');
+                const cartTotalEl = document.getElementById('cart-total');
+                const cartBadge = document.getElementById('cart-badge');
+                const cartBadgeMobile = document.getElementById('cart-badge-mobile');
+                const checkoutButton = document.getElementById('checkout-button');
+
+                cartItemsContainer.innerHTML = '';
+                let total = 0;
+                let totalItems = 0;
+
+                if (cart.length === 0) {
+                    cartItemsContainer.innerHTML = '<p class="text-gray-400 text-center">Your cart is empty.</p>';
+                    checkoutButton.disabled = true;
+                } else {
+                    cart.forEach(item => {
+                        cartItemsContainer.innerHTML += `
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-4">
+                                    <img src="${item.img}" alt="${item.name}" class="w-16 h-16 rounded-md object-cover">
+                                    <div>
+                                        <h4 class="text-white font-semibold">${item.name}</h4>
+                                        <p class="text-gray-400">₹${item.price} x ${item.quantity}</p>
+                                    </div>
+                                </div>
+                                <button class="remove-from-cart-btn text-red-400 hover:text-red-300" data-product-id="${item.id}">
+                                    <i data-feather="trash-2"></i>
+                                </button>
+                            </div>
+                        `;
+                        total += item.price * item.quantity;
+                        totalItems += item.quantity;
+                    });
+                    checkoutButton.disabled = false;
+                }
+
+                cartTotalEl.textContent = `₹${total.toFixed(2)}`;
+                if (totalItems > 0) {
+                    [cartBadge, cartBadgeMobile].forEach(badge => {
+                        badge.textContent = totalItems;
+                        badge.classList.remove('hidden');
+                    });
+                } else {
+                    [cartBadge, cartBadgeMobile].forEach(badge => badge.classList.add('hidden'));
+                }
+                feather.replace();
+            }
+
+            function removeFromCart(productId) {
+                cart = cart.filter(item => item.id !== productId);
+                updateCart();
+            }
+
+            // --- Modal Logic ---
+            function openProductModal(productId) {
+                const allProducts = [...products.ebooks, ...products.courses];
+                const product = allProducts.find(p => p.id === productId);
+                if (!product) return;
+
+                const modalContent = document.getElementById('product-modal-content');
+                modalContent.innerHTML = `
+                    <button id="close-product-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
+                        <i data-feather="x" class="w-8 h-8"></i>
+                    </button>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <img src="${product.img}" alt="${product.name}" class="rounded-lg w-full h-auto object-cover">
+                        <div>
+                            <h2 class="text-4xl font-bold text-white mb-4">${product.name}</h2>
+                            <p class="text-gray-300 mb-6 text-lg">${product.description}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-4xl font-bold text-indigo-400">₹${product.price}</span>
+                                <div class="flex gap-2">
+                                    <button class="add-to-cart-btn bg-gray-800 hover:bg-indigo-600 text-white font-semibold p-3 rounded-lg transition-colors duration-300" data-product-id="${product.id}">
+                                        <i data-feather="shopping-cart" class="w-6 h-6"></i>
+                                    </button>
+                                    <button class="buy-now-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-lg" data-product-id="${product.id}">
+                                        Buy Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                toggleModal('product-modal', true);
+                feather.replace();
+            }
+
+            function toggleModal(modalId, show) {
+                const modal = document.getElementById(modalId);
+                const content = modal.querySelector('.modal-content');
+                if (show) {
+                    modal.classList.remove('pointer-events-none');
+                    modal.classList.add('opacity-100');
+                    content.classList.add('opacity-100', 'scale-100');
+                    content.classList.remove('opacity-0', 'scale-95');
+                } else {
+                    modal.classList.add('pointer-events-none');
+                    modal.classList.remove('opacity-100');
+                    content.classList.remove('opacity-100', 'scale-100');
+                    content.classList.add('opacity-0', 'scale-95');
+                }
+            }
+            
+            // --- Event Listeners ---
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.add-to-cart-btn')) {
+                    const productId = parseInt(e.target.closest('.add-to-cart-btn').dataset.productId);
+                    addToCart(productId);
+                }
+                if (e.target.closest('.buy-now-btn')) {
+                    const productId = parseInt(e.target.closest('.buy-now-btn').dataset.productId);
+                    cart = [];
+                    addToCart(productId);
+                    openCheckoutModal();
+                }
+                if (e.target.closest('.remove-from-cart-btn')) {
+                    const productId = parseInt(e.target.closest('.remove-from-cart-btn').dataset.productId);
+                    removeFromCart(productId);
+                }
+                if (e.target.closest('.product-card .overflow-hidden')) {
+                     const productId = parseInt(e.target.closest('.overflow-hidden').dataset.productId);
+                    openProductModal(productId);
+                }
+                if (e.target.closest('#close-product-modal') || e.target.id === 'product-modal') {
+                    toggleModal('product-modal', false);
+                }
+                if (e.target.closest('#cart-button') || e.target.closest('#cart-button-mobile')) {
+                    document.getElementById('cart-sidebar').classList.remove('translate-x-full');
+                }
+                if (e.target.closest('#close-cart-button')) {
+                    document.getElementById('cart-sidebar').classList.add('translate-x-full');
+                }
+                if (e.target.closest('#checkout-button')) {
+                    openCheckoutModal();
+                }
+                if (e.target.closest('#close-checkout-modal') || e.target.id === 'checkout-modal') {
+                    toggleModal('checkout-modal', false);
+                }
+                if (e.target.closest('#close-success-modal') || e.target.id === 'success-modal') {
+                    toggleModal('success-modal', false);
+                }
+                if (e.target.closest('#admin-button') || e.target.closest('#admin-button-mobile')) {
+                    toggleModal('admin-modal', true);
+                }
+                if (e.target.closest('#close-admin-modal') || e.target.id === 'admin-modal') {
+                    toggleModal('admin-modal', false);
+                }
+                if (e.target.closest('#add-product-btn')) {
+                    openProductForm();
+                }
+                if (e.target.closest('#cancel-product-form')) {
+                    toggleModal('product-form-modal', false);
+                }
+                if (e.target.closest('.edit-product-btn')) {
+                    const productId = parseInt(e.target.closest('.edit-product-btn').dataset.productId);
+                    const productType = e.target.closest('.edit-product-btn').dataset.productType;
+                    openProductForm({ id: productId, type: productType });
+                }
+                if (e.target.closest('.delete-product-btn')) {
+                    const productId = parseInt(e.target.closest('.delete-product-btn').dataset.productId);
+                    const productType = e.target.closest('.delete-product-btn').dataset.productType;
+                    deleteProduct(productId, productType);
+                }
+            });
+
+            function openCheckoutModal() {
+                if (cart.length === 0) {
+                    showMessage("Your cart is empty.", true);
+                    return;
+                }
+                const summaryContainer = document.getElementById('checkout-order-summary');
+                const subtotalEl = document.getElementById('checkout-subtotal');
+                const totalEl = document.getElementById('checkout-total');
+                const payButtonText = document.getElementById('pay-button-text');
+                
+                summaryContainer.innerHTML = '';
+                const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                
+                cart.forEach(item => {
+                    summaryContainer.innerHTML += `
+                        <div class="flex justify-between text-sm items-center">
+                            <span class="text-gray-300">${item.name} (x${item.quantity})</span>
+                            <span class="text-white font-medium">₹${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+                
+                subtotalEl.textContent = `₹${totalAmount.toFixed(2)}`;
+                totalEl.textContent = `₹${totalAmount.toFixed(2)}`;
+                payButtonText.textContent = `Pay ₹${totalAmount.toFixed(2)}`;
+
+                document.getElementById('cart-sidebar').classList.add('translate-x-full');
+                toggleModal('checkout-modal', true);
+                feather.replace();
+            }
+            
+            // --- Payment Logic ---
+            document.getElementById('checkout-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const phoneInput = document.getElementById('checkout-phone');
+                if (!/^\d{10}$/.test(phoneInput.value)) {
+                    showMessage("Please enter a valid 10-digit mobile number.", true);
+                    return;
+                }
+
+                const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const userEmail = document.getElementById('checkout-email').value;
+                const userPhone = phoneInput.value;
+
+                var options = {
+                    "key": "rzp_test_your_key_id_here", // IMPORTANT: Boss, please enter your Razorpay Key ID here
+                    "amount": totalAmount * 100,
+                    "currency": "INR",
+                    "name": "DigiSell",
+                    "description": "Digital Products Purchase",
+                    "handler": function (response){
+                        toggleModal('checkout-modal', false);
+                        
+                        const downloadLinksContainer = document.getElementById('download-links');
+                        downloadLinksContainer.innerHTML = '';
+                        cart.forEach(item => {
+                            downloadLinksContainer.innerHTML += `
+                                <a href="${item.downloadUrl}" target="_blank" class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <span class="text-indigo-300 font-medium">${item.name}</span>
+                                    <i data-feather="download" class="w-5 h-5 text-gray-400"></i>
+                                </a>
+                            `;
+                        });
+                        toggleModal('success-modal', true);
+                        feather.replace();
+                        cart = [];
+                        updateCart();
+                    },
+                    "prefill": { "name": "Valued Customer", "email": userEmail, "contact": userPhone },
+                    "theme": { "color": "#4F46E5" }
+                };
+                var rzp1 = new Razorpay(options);
+                rzp1.on('payment.failed', function (response){
+                    showMessage(`Payment failed: ${response.error.description}`, true);
+                });
+                rzp1.open();
+            });
+
+            // --- Admin Panel Logic ---
+            function renderAdminList() {
+                const listContainer = document.getElementById('admin-product-list');
+                listContainer.innerHTML = '';
+                const allProducts = [
+                    ...products.ebooks.map(p => ({...p, type: 'ebooks'})), 
+                    ...products.courses.map(p => ({...p, type: 'courses'}))
+                ];
+
+                if(allProducts.length === 0) {
+                    listContainer.innerHTML = '<p class="text-gray-400 text-center">No products found. Add one!</p>';
+                    return;
+                }
+
+                allProducts.forEach(product => {
+                    listContainer.innerHTML += `
+                        <div class="bg-gray-800 p-4 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-white font-semibold">${product.name}</p>
+                                <p class="text-sm text-gray-400">Type: ${product.type} | Price: ₹${product.price}</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button class="edit-product-btn text-blue-400 hover:text-blue-300" data-product-id="${product.id}" data-product-type="${product.type}">
+                                    <i data-feather="edit" class="w-5 h-5"></i>
+                                </button>
+                                <button class="delete-product-btn text-red-400 hover:text-red-300" data-product-id="${product.id}" data-product-type="${product.type}">
+                                    <i data-feather="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                feather.replace();
+            }
+
+            function openProductForm(productToEdit = null) {
+                const form = document.getElementById('product-form');
+                form.reset();
+                document.getElementById('product-id').value = '';
+                const formTitle = document.getElementById('product-form-title');
+
+                if (productToEdit) {
+                    formTitle.textContent = 'Edit Product';
+                    const product = products[productToEdit.type].find(p => p.id === productToEdit.id);
+                    document.getElementById('product-id').value = product.id;
+                    document.getElementById('product-name').value = product.name;
+                    document.getElementById('product-price').value = product.price;
+                    document.getElementById('product-description').value = product.description;
+                    document.getElementById('product-img').value = product.img;
+                    document.getElementById('product-downloadUrl').value = product.downloadUrl;
+                    document.getElementById('product-type').value = productToEdit.type;
+                } else {
+                    formTitle.textContent = 'Add New Product';
+                }
+                toggleModal('product-form-modal', true);
+            }
+
+            document.getElementById('product-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const productId = parseInt(document.getElementById('product-id').value);
+                const productType = document.getElementById('product-type').value;
+
+                const productData = {
+                    name: document.getElementById('product-name').value,
+                    price: parseFloat(document.getElementById('product-price').value),
+                    description: document.getElementById('product-description').value,
+                    img: document.getElementById('product-img').value,
+                    downloadUrl: document.getElementById('product-downloadUrl').value,
+                };
+
+                if (productId) { // Editing existing product
+                    const productIndex = products[productType].findIndex(p => p.id === productId);
+                    products[productType][productIndex] = { ...products[productType][productIndex], ...productData };
+                    showMessage('Product updated successfully!');
+                } else { // Adding new product
+                    productData.id = Date.now(); // Simple unique ID
+                    products[productType].push(productData);
+                    showMessage('Product added successfully!');
+                }
+
+                saveProducts();
+                renderAll();
+                toggleModal('product-form-modal', false);
+            });
+
+            function deleteProduct(productId, productType) {
+                if (!isAdminLoggedIn) {
+                    showMessage('You must be logged in as admin to delete products', true);
+                    return;
+                }
+                
+                if (window.prompt("Type 'DELETE' to confirm product deletion.") === 'DELETE') {
+                    products[productType] = products[productType].filter(p => p.id !== productId);
+                    saveProducts();
+                    renderAll();
+                    showMessage('Product deleted successfully!');
+                } else {
+                    showMessage('Deletion cancelled.', true);
+                }
+            }
+
+
+            // --- Message Popup ---
+            let messageTimeout;
+            function showMessage(message, isError = false) {
+                const popup = document.getElementById('message-popup');
+                const text = document.getElementById('message-text');
+                text.textContent = message;
+                popup.style.backgroundColor = isError ? '#991B1B' : '#1F2937';
+                clearTimeout(messageTimeout);
+                popup.classList.remove('translate-y-20', 'opacity-0');
+                messageTimeout = setTimeout(() => {
+                    popup.classList.add('translate-y-20', 'opacity-0');
+                }, 4000);
+            }
+
+            // --- Initial Setup ---
+            loadProducts();
+            renderAll();
+            updateCart();
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', () => {
+                header.classList.toggle('shadow-lg', window.scrollY > 50);
+                header.classList.toggle('shadow-indigo-500/10', window.scrollY > 50);
+            });
+            
+            // --- Hero Canvas Animation (unchanged) ---
+            const canvas = document.getElementById('hero-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            function setCanvasSize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; init(); }
+            window.addEventListener('resize', setCanvasSize);
+            class Particle { constructor(x,y,size,color,sx,sy){this.x=x;this.y=y;this.size=size;this.color=color;this.speedX=sx;this.speedY=sy;} draw(){ctx.fillStyle=this.color;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();} update(){if(this.x+this.size>canvas.width||this.x-this.size<0){this.speedX=-this.speedX;}if(this.y+this.size>canvas.height||this.y-this.size<0){this.speedY=-this.speedY;}this.x+=this.speedX;this.y+=this.speedY;this.draw();}}
+            function init() { particles = []; const num = (canvas.height * canvas.width) / 9000; for (let i=0; i<num; i++){let s=Math.random()*1.5+0.5;let x=Math.random()*(innerWidth-s*2)+s;let y=Math.random()*(innerHeight-s*2)+s;let sx=(Math.random()*0.4)-0.2;let sy=(Math.random()*0.4)-0.2;particles.push(new Particle(x,y,s,'rgba(165,180,252,0.7)',sx,sy));}}
+            function animate() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>p.update()); requestAnimationFrame(animate); }
+            setCanvasSize();
+
+        });
+    </script>
+</body>
+</html>
+
